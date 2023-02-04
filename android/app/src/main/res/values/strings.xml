@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Adopt A Pet</string>
+    <string name="facebook_app_id">873849590487605</string>
+    <string name="facebook_client_token">f9754a8c31f77c81ed29c761b9359518</string>
+    <string name="fb_login_protocol_scheme">fb1418029498553151</string>
+
+
+</resources>
