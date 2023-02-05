@@ -1,5 +1,7 @@
 import 'package:adopt_a_pet/pages/Home/home-screen.dart';
 import 'package:adopt_a_pet/pages/SignIn-SignUp/signin-screen.dart';
+import 'package:adopt_a_pet/provider-controller/Provider-Controller.dart';
+import 'package:adopt_a_pet/utilities/AssetStorageImage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -9,7 +11,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:splash_view/source/presentation/pages/splash_view.dart';
 import 'package:splash_view/source/presentation/widgets/done.dart';
-
+import 'package:provider/provider.dart';
 import 'All-Constants/color_constants.dart';
 import 'All-Constants/global_variable.dart';
 import 'model/user-model.dart';
@@ -24,7 +26,11 @@ Future<void> main() async {
 
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  runApp(MyApp());
+  runApp(
+    MultiProvider(providers: [
+      ChangeNotifierProvider(create: (_) => ProviderController()),
+    ], child: MyApp()),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -114,16 +120,10 @@ class _MyAppState extends State<MyApp> {
 
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-      /// Create an Android Notification Channel.
-      ///
-      /// We use this channel in the `AndroidManifest.xml` file to override the
-      /// default FCM channel to enable heads up notifications.
       await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(channel);
 
-      /// Update the iOS foreground notification presentation options to allow
-      /// heads up notifications.
       await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
         alert: true,
         badge: true,
@@ -157,11 +157,6 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      // theme: ThemeData(
-      //
-      //   primarySwatch: Colors.blue,
-      // ),
       home: SplashView(
           gradient: const LinearGradient(
               begin: Alignment.topCenter,
@@ -171,7 +166,7 @@ class _MyAppState extends State<MyApp> {
           logo: SizedBox(
             height: 150,
             width: 150,
-            child: Image.asset('asset/images/app-logo.png'),
+            child: Image.asset(AssetStorageImage.eCommerceLogo),
           ),
           done: Done(
             !_isLogIn ? const SignInScreen() : const HomeScreen(),

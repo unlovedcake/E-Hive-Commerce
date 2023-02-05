@@ -52,7 +52,7 @@ class SignUpScreenState extends State<SignUpScreen> {
     icon = [
       Center(
         child: Text(
-          'Adopt A Pet',
+          'E-Hive',
           style: GoogleFonts.acme(
             textStyle: const TextStyle(
                 color: AppColors.logoColor,

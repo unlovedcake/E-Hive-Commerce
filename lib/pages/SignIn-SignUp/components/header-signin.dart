@@ -1,3 +1,4 @@
+import 'package:adopt_a_pet/utilities/AssetStorageImage.dart';
 import 'package:flutter/material.dart';
 
 import '../../../All-Constants/size_constants.dart';
@@ -30,14 +31,14 @@ class HeaderSignIn extends StatelessWidget {
                     children: <TextSpan>[
                       TextSpan(
                           text: label,
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 36, fontWeight: FontWeight.bold, color: Colors.black)),
                     ],
                   ),
                 ),
               ),
               Image.asset(
-                'asset/images/app-logo.png',
+                AssetStorageImage.eCommerceLogo,
                 width: 100,
                 height: 100,
               )
