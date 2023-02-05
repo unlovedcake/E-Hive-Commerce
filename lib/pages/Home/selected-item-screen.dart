@@ -1,5 +1,4 @@
 import 'package:adopt_a_pet/All-Constants/all_constants.dart';
-import 'package:adopt_a_pet/model/pet-model.dart';
 import 'package:adopt_a_pet/model/product-model.dart';
 import 'package:adopt_a_pet/utilities/AssetStorageImage.dart';
 import 'package:cached_network_image/cached_network_image.dart';

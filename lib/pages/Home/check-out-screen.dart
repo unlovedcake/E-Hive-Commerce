@@ -181,8 +181,16 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                           ),
                                           onPressed: () {
                                             totalPayment.value -= items.value[index]['price'];
-                                            countAddToCartItem.value -= int.parse(
-                                                items.value[index]['quantity'].toString());
+
+                                            if (countAddToCartItem.value > 0) {
+                                              countAddToCartItem.value -= int.parse(
+                                                  items.value[index]['quantity'].toString());
+                                              //quantities.value?[index] = 0;
+                                              //quantities.value = List.generate(qty.value, (_) => 0);
+                                            } else if (index <= 0) {
+                                              countAddToCartItem.value = 0;
+                                              quantities.value = List.generate(qty.value, (_) => 0);
+                                            }
 
                                             setState(() {
                                               items.value.removeAt(index);

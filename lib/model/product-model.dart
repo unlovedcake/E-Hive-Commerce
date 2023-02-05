@@ -9,6 +9,7 @@ class ProductModel {
   String? brand;
   String? category;
   String? thumbnail;
+  int qty = 0;
   List<String>? images;
 
   ProductModel({
@@ -22,6 +23,7 @@ class ProductModel {
     this.brand,
     this.category,
     this.thumbnail,
+    required this.qty,
     this.images,
   });
 
@@ -39,6 +41,7 @@ class ProductModel {
       brand: json['brand'],
       category: json['category'],
       thumbnail: json['thumbnail'],
+      qty: json['qty'] ?? 0,
       images: List<String>.from(json['images']),
     );
   }

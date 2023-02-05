@@ -14,7 +14,7 @@ extension ExtensionSigninController on HomeScreenState {
       if (_controller.position.pixels == _controller.position.maxScrollExtent && !isLoading.value) {
         setState(() {});
 
-        if (addLimitTenItem.value < _data!.length) {
+        if (addLimitTenItem.value < _data.value!.length) {
           _fetchDataProduct();
           addLimitTenItem.value += 10;
           isLoading.value = true;
@@ -35,13 +35,13 @@ extension ExtensionSigninController on HomeScreenState {
 
         debugPrint(decodedData.limit.toString());
 
-        qty = decodedData.limit ?? 0;
+        qty.value = decodedData.limit ?? 0;
         debugPrint("LIMIT");
 
         // List<ProductModel> decodedData =
         //     (jsonData['products'] as List).map((value) => ProductModel.fromJson(value)).toList();
 
-        _data = decodedData.productData;
+        _data.value = decodedData.productData;
         // _data = decodedData.productData
         //     ?.sublist(0, dataLenght.value)
         //     .map(
@@ -59,7 +59,7 @@ extension ExtensionSigninController on HomeScreenState {
         //     )
         //     .toList();
 
-        searchData = _data;
+        searchData = _data.value!;
 
         isLoading.value = false;
       });
@@ -100,9 +100,8 @@ extension ExtensionSigninController on HomeScreenState {
     if (enteredKeyword.isEmpty) {
       _fetchDataProduct();
     } else {
-      _data = searchData!
-          .where((studentName) =>
-              studentName.title!.toUpperCase().contains(enteredKeyword.toUpperCase()))
+      _data.value = searchData!
+          .where((product) => product.title!.toUpperCase().contains(enteredKeyword.toUpperCase()))
           .toList();
     }
   }

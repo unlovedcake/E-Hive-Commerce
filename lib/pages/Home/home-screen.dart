@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:adopt_a_pet/pages/Home/check-out-screen.dart';
 import 'package:adopt_a_pet/pages/Home/selected-item-screen.dart';
+import 'package:adopt_a_pet/provider-controller/Provider-Controller.dart';
 import 'package:adopt_a_pet/widgets/cache-network-image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/rendering.dart';
@@ -11,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'package:substring_highlight/substring_highlight.dart';
 import '../../All-Constants/color_constants.dart';
 import '../../All-Constants/global_variable.dart';
@@ -29,7 +31,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
-  List<ProductModel>? _data = [];
+  //List<ProductModel>? _data = [];
   List<ProductModel>? searchData = [];
 
   final ScrollController _controller = ScrollController();
@@ -37,7 +39,7 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
   var addLimitTenItem = ValueNotifier<int>(10);
   var countBuyItem = ValueNotifier<int>(0);
 
-  int? qty = 0;
+  var _data = ValueNotifier<List<ProductModel>?>([]);
 
   TextEditingController searchController = TextEditingController();
 
@@ -71,7 +73,7 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
 
-    quantities.value = List.filled(qty!, 0);
+    quantities.value = List.filled(qty.value, 0);
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -92,6 +94,9 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
               builder: (context, _, child) {
                 return TextButton.icon(
                   onPressed: () {
+                    if (countAddToCartItem.value == 0) {
+                      items.value.clear();
+                    }
                     Navigator.of(context).push(pageRouteAnimate(const CheckOutScreen()));
                   },
                   icon: Stack(
@@ -149,7 +154,6 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
           padding: const EdgeInsets.all(12.0),
           child: searchTextField(),
         ),
-        SizedBox(height: size.height * .02),
         Expanded(
           child: RefreshIndicator(
             color: Colors.black,
@@ -159,147 +163,158 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
               countAddToCartItem.value = 0;
               items.value.clear();
             },
-            child: ValueListenableBuilder(
-              valueListenable: addLimitTenItem,
-              builder: (BuildContext context, _, Widget? child) {
-                if (_data!.isEmpty && searchController.text.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (_data!.isEmpty && searchController.text.isNotEmpty) {
-                  return const Center(child: Text('No Search Found...'));
-                }
-                return Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: GridView.count(
-                    controller: _controller,
-                    crossAxisCount: 2,
-                    childAspectRatio: 8.0 / 9.8,
-                    children: List.generate(_data!.length, (index) {
-                      _data!.sort((a, b) => a.title.toString().compareTo(b.title.toString()));
+            child: _data.value!.isEmpty && searchController.text.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : _data.value!.isEmpty && searchController.text.isNotEmpty
+                    ? const Center(child: Text('No Search Found...'))
+                    : Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: GridView.count(
+                          controller: _controller,
+                          crossAxisCount: 2,
+                          childAspectRatio: 8.0 / 9.8,
+                          children: List.generate(_data.value!.length, (index) {
+                            _data.value!
+                                .sort((a, b) => a.title.toString().compareTo(b.title.toString()));
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 18.0),
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.of(context).push(
-                                pageRouteAnimate(SelectedItemView(dataDetails: _data![index])));
-                          },
-                          child: Card(
-                            child: Container(
-                              height: size.height,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(15.0),
-                                gradient: LinearGradient(
-                                  colors: [Colors.white, Colors.grey.shade200],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.only(bottom: 5),
-                                    height: size.height * .10,
-                                    width: size.width,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black12,
-                                          blurRadius: 10.0,
-                                          offset: Offset(0, 10),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Hero(
-                                      tag: _data?[index].id.toString() ?? "",
-                                      child: CachedNetworkImage(
-                                        fit: BoxFit.cover,
-                                        imageUrl: _data?[index].thumbnail.toString() ?? "",
-                                        progressIndicatorBuilder:
-                                            (context, url, downloadProgress) =>
-                                                CircularProgressIndicator(
-                                                    value: downloadProgress.progress),
-                                        errorWidget: (context, url, error) =>
-                                            Image.asset(AssetStorageImage.eCommerceLogo),
-                                      ),
+                            if (countAddToCartItem.value <= 0) {
+                              countAddToCartItem.value = 0;
+                              items.value.clear();
+                              quantities.value = List.generate(qty.value, (_) => 0);
+
+                              print(quantities.value.toString());
+                              print("sad");
+                            }
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 18.0),
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.of(context).push(pageRouteAnimate(
+                                      SelectedItemView(dataDetails: _data.value![index])));
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.only(right: 12),
+                                  height: size.height,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                    gradient: LinearGradient(
+                                      colors: [Colors.white, Colors.grey.shade200],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
                                     ),
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 8.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        FittedBox(
-                                          child: SubstringHighlight(
-                                            textStyle: const TextStyle(
-                                                fontWeight: FontWeight.bold, color: Colors.blue),
-                                            text: _data?[index].title.toString() ??
-                                                "", // search result string from database or something
-                                            term: highLightSearchtTerm, // user typed "et"
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.only(bottom: 5),
+                                        height: size.height * .10,
+                                        width: size.width,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black12,
+                                              blurRadius: 10.0,
+                                              offset: Offset(0, 10),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Hero(
+                                          tag: _data.value![index].id.toString(),
+                                          child: CachedNetworkImage(
+                                            fit: BoxFit.cover,
+                                            imageUrl: _data.value![index].thumbnail.toString(),
+                                            progressIndicatorBuilder:
+                                                (context, url, downloadProgress) =>
+                                                    CircularProgressIndicator(
+                                                        value: downloadProgress.progress),
+                                            errorWidget: (context, url, error) =>
+                                                Image.asset(AssetStorageImage.eCommerceLogo),
                                           ),
                                         ),
-                                        Text(
-                                          _data?[index].price.toString() ?? "",
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  ValueListenableBuilder(
-                                      valueListenable: countBuyItem,
-                                      builder: (context, _, child) {
-                                        return Row(
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 8.0),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            OutlinedButton(
-                                              onPressed: () {
-                                                if (quantities.value![index] != 0) {
-                                                  countBuyItem.value = quantities.value![index]--;
-                                                  countAddItemToCart();
-                                                }
-                                              },
-                                              child: Text("-"),
+                                            FittedBox(
+                                              child: SubstringHighlight(
+                                                textStyle: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.blue),
+                                                text: _data.value![index].title
+                                                    .toString(), // search result string from database or something
+                                                term: highLightSearchtTerm, // user typed "et"
+                                              ),
                                             ),
-                                            Text("${quantities.value![index]}"),
-                                            OutlinedButton(
-                                              onPressed: () {
-                                                countBuyItem.value = quantities.value![index]++;
-
-                                                countAddItemToCart();
-                                              },
-                                              child: Text("+"),
-                                            )
+                                            Text(
+                                              _data.value![index].price.toString() ?? "",
+                                            ),
                                           ],
-                                        );
-                                      }),
-                                  ValueListenableBuilder(
-                                      valueListenable: countBuyItem,
-                                      builder: (BuildContext context, _, Widget? child) {
-                                        return addToCartButton(index);
-                                      }),
-                                ],
+                                        ),
+                                      ),
+                                      ValueListenableBuilder(
+                                          valueListenable: countBuyItem,
+                                          builder: (context, _, child) {
+                                            return Row(
+                                              crossAxisAlignment: CrossAxisAlignment.center,
+                                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                              children: [
+                                                OutlinedButton(
+                                                  onPressed: () {
+                                                    if (quantities.value![index] != 0) {
+                                                      countBuyItem.value =
+                                                          quantities.value![index]--;
+                                                      _data.value![index].qty--;
+                                                      countAddItemToCart();
+
+                                                      items.value[index]['quantity'] =
+                                                          countBuyItem.value - 1;
+                                                    } else {
+                                                      countAddItemToCart();
+                                                    }
+                                                  },
+                                                  child: Text("-"),
+                                                ),
+                                                Text(quantities.value?[index].toString() ?? ""),
+                                                OutlinedButton(
+                                                  onPressed: () {
+                                                    countBuyItem.value = quantities.value![index]++;
+                                                    _data.value![index].qty++;
+
+                                                    items.value[index]['quantity'] =
+                                                        countBuyItem.value + 1;
+
+                                                    print(index.toString());
+                                                    print("Index");
+                                                  },
+                                                  child: Text("+"),
+                                                )
+                                              ],
+                                            );
+                                          }),
+                                      ValueListenableBuilder(
+                                          valueListenable: countBuyItem,
+                                          builder: (BuildContext context, _, Widget? child) {
+                                            return addToCartButton(index);
+                                          }),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                            );
+                          }),
                         ),
-                      );
-                    }),
-                  ),
-                );
-              },
-            ),
+                      ),
           ),
         ),
-        // OutlinedButton(
-        //     onPressed: () {
-        //       Navigator.of(context).push(pageRouteAnimate(const CheckOutScreen()));
-        //     },
-        //     child: const Text("Check Out")),
         ValueListenableBuilder(
             valueListenable: isLoading,
-            builder: (BuildContext context, _, Widget? child) {
+            builder: (context, _, child) {
               return isLoading.value
                   ? const Center(
                       child: Padding(
@@ -394,29 +409,38 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
       onPressed: quantities.value![index] == 0
           ? null
           : () {
-              items.value.where((item) => item['id'] == _data?[index].id.toString()).toList();
-              // if (items.isEmpty) {
-              //   items.add({
-              //     'id': _data?[index].id.toString() ?? "",
-              //     'title': _data?[index].title.toString() ?? "",
-              //     'description': _data?[index].description.toString() ?? "",
-              //     'price': _data?[index].price.toString() ?? "",
-              //     'quantity': quantities?[index] ?? 0,
-              //   });
-              // } else {
-              //   print("You already Added this item");
-              // }
+              bool isAdded =
+                  items.value.any((item) => item['id'] == _data.value![index].id.toString());
 
-              _animateController.forward().then((_) => _animateController.reverse());
+              if (!isAdded) {
+                items.value.add({
+                  'id': _data.value?[index].id.toString() ?? "",
+                  'title': _data.value?[index].title.toString() ?? "",
+                  'description': _data.value?[index].description.toString() ?? "",
+                  'price': _data.value?[index].price,
+                  'thumbnail': _data.value?[index].thumbnail.toString() ?? "",
+                  'quantity': quantities.value?[index] ?? 0,
+                });
+                _animateController.forward().then((_) => _animateController.reverse());
+              } else {
+                displayErrorMessage('You already Added this item.');
+                print("You already Added this item");
+              }
 
-              items.value.add({
-                'id': _data?[index].id.toString() ?? "",
-                'title': _data?[index].title.toString() ?? "",
-                'description': _data?[index].description.toString() ?? "",
-                'price': _data?[index].price,
-                'thumbnail': _data?[index].thumbnail.toString() ?? "",
-                'quantity': quantities.value?[index] ?? 0,
-              });
+              // items.value.add({
+              //   'id': _data.value![index].id.toString() ?? "",
+              //   'title': _data.value![index].title.toString() ?? "",
+              //   'description': _data.value![index].description.toString() ?? "",
+              //   'price': _data.value![index].price,
+              //   'thumbnail': _data.value![index].thumbnail.toString() ?? "",
+              //   'quantity': quantities.value?[index] ?? 0,
+              // });
+
+              print(items.value.toString());
+              print(items.value.length.toString());
+              print("KK");
+
+              countAddItemToCart();
             },
       icon: Icon(
         Icons.add_shopping_cart,
@@ -428,30 +452,6 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
         style:
             TextStyle(color: quantities.value![index] == 0 ? Colors.grey.shade300 : Colors.white),
       ), // <-- Text
-    );
-  }
-
-  Row addMinusButton() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        OutlinedButton(
-          onPressed: () {},
-          child: const Text(
-            "-",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-        const Text("1"),
-        OutlinedButton(
-          onPressed: () {},
-          child: const Text(
-            "+",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        )
-      ],
     );
   }
 
