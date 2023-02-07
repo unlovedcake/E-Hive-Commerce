@@ -71,6 +71,8 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
 
+    print('zz');
+
     //quantities.value = List.filled(qty.value, 0);
     productItems.value = List.filled(
         qty.value,
@@ -550,6 +552,8 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
     bool isAdded = items.value.any((item) => item['id'] == data.value![index].id.toString());
 
     if (!isAdded) {
+      List<Map<String, dynamic>> itemz = [];
+
       items.value.add({
         'id': data.value![index].id,
         'count': index,
@@ -559,11 +563,20 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
         'thumbnail': data.value?[index].thumbnail.toString() ?? "",
         'quantity': quantities.value?[index] ?? 0,
       });
+
+      Provider.of<ProviderController>(context, listen: false).setListItems(items.value);
+
       _animateController.forward().then((_) => _animateController.reverse());
     } else {
       displayErrorMessage('You already Added this item.');
       print("You already Added this item");
     }
+
+    var list = Provider.of<ProviderController>(context, listen: false).getListItems;
+
+    print(list);
+    print(list.length);
+    print("list");
   }
 
   OutlinedButton addToCartButton(int index) {
