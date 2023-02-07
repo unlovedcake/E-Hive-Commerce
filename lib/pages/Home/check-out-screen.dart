@@ -21,16 +21,30 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
       totalPayment.value += items.value[i]['price'] * items.value[i]['quantity'];
     }
 
+    print(quantities.value.toString());
+    print("az");
+
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-
+    if (items.value.isEmpty) {
+      countAddToCartItem.value = 0;
+    }
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
+        leading: TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(quantities.value);
+          },
+          child: Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black,
+          ),
+        ),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
         centerTitle: true,
@@ -185,15 +199,19 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                             if (countAddToCartItem.value > 0) {
                                               countAddToCartItem.value -= int.parse(
                                                   items.value[index]['quantity'].toString());
-                                              //quantities.value?[index] = 0;
-                                              //quantities.value = List.generate(qty.value, (_) => 0);
+
+                                              print(quantities.value.toString());
+                                              print("ads");
                                             } else if (index <= 0) {
+                                              // quantities.value = List.generate(qty.value, (_) => 0);
                                               countAddToCartItem.value = 0;
-                                              quantities.value = List.generate(qty.value, (_) => 0);
                                             }
 
                                             setState(() {
+                                              quantities.value?[items.value[index]['count']] = 0;
                                               items.value.removeAt(index);
+                                              print(quantities.value.toString());
+                                              print("adaz");
                                             });
                                           },
                                           child: const Text("Cancel"))
@@ -217,22 +235,31 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         builder: (context, _, child) {
                           return Padding(
                             padding: const EdgeInsets.all(12.0),
-                            child: Row(
+                            child: Column(
                               children: [
-                                Text(
-                                  "Total Payment : ",
-                                  style: TextStyle(
-                                      fontSize: 22,
-                                      color: Colors.grey.shade400,
-                                      fontWeight: FontWeight.bold),
+                                Row(
+                                  children: [
+                                    Text(
+                                      "Total Payment : ",
+                                      style: TextStyle(
+                                          fontSize: 22,
+                                          color: Colors.grey.shade400,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    FittedBox(
+                                      child: Text(
+                                        totalPayment.value.toString(),
+                                        style: const TextStyle(
+                                            fontSize: 22, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  totalPayment.value.toString(),
-                                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                                const SizedBox(
+                                  height: 20,
                                 ),
-                                const Spacer(),
                                 SizedBox(
-                                  width: size.width * .28,
+                                  width: size.width,
                                   child: OutlinedButton(
                                       style: ElevatedButton.styleFrom(
                                         foregroundColor: Colors.white,

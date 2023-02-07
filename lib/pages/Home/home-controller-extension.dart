@@ -14,7 +14,7 @@ extension ExtensionSigninController on HomeScreenState {
       if (_controller.position.pixels == _controller.position.maxScrollExtent && !isLoading.value) {
         setState(() {});
 
-        if (addLimitTenItem.value < _data.value!.length) {
+        if (addLimitTenItem.value < data.value!.length) {
           _fetchDataProduct();
           addLimitTenItem.value += 10;
           isLoading.value = true;
@@ -41,7 +41,9 @@ extension ExtensionSigninController on HomeScreenState {
         // List<ProductModel> decodedData =
         //     (jsonData['products'] as List).map((value) => ProductModel.fromJson(value)).toList();
 
-        _data.value = decodedData.productData;
+        data.value = decodedData.productData;
+
+        productItems.value = data.value;
         // _data = decodedData.productData
         //     ?.sublist(0, dataLenght.value)
         //     .map(
@@ -59,7 +61,7 @@ extension ExtensionSigninController on HomeScreenState {
         //     )
         //     .toList();
 
-        searchData = _data.value!;
+        searchData = data.value!;
 
         isLoading.value = false;
       });
@@ -100,7 +102,7 @@ extension ExtensionSigninController on HomeScreenState {
     if (enteredKeyword.isEmpty) {
       _fetchDataProduct();
     } else {
-      _data.value = searchData!
+      data.value = searchData!
           .where((product) => product.title!.toUpperCase().contains(enteredKeyword.toUpperCase()))
           .toList();
     }
