@@ -17,6 +17,7 @@ import 'package:substring_highlight/substring_highlight.dart';
 import '../../All-Constants/color_constants.dart';
 import '../../All-Constants/global_variable.dart';
 import '../../model/product-model.dart';
+import '../../model/student-model.dart';
 import '../../router/Navigate-Route.dart';
 import '../../utilities/AssetStorageImage.dart';
 import '../../widgets/Toast-Message.dart';
@@ -50,6 +51,16 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
 
   @override
   void initState() {
+    Student student = Student(name: 'John Doe', course: 'Computer Science');
+    print(student.name); // Output: John Doe
+    print(student.course); // Output: Computer Science
+    print('student info');
+
+    Student student2 = Student();
+    print(student2.name ?? "ada"); // Output: Unknown
+    print(student2.course ?? "adad"); // Ou
+    print('student info');
+
     _animateController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
@@ -70,25 +81,6 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-
-    print('zz');
-
-    //quantities.value = List.filled(qty.value, 0);
-    productItems.value = List.filled(
-        qty.value,
-        ProductModel(
-          id: 0,
-          title: '',
-          description: '',
-          price: 0.0,
-          discountPercentage: 0.0,
-          rating: 0.0,
-          stock: 0,
-          brand: '',
-          category: '',
-          qty: 0,
-          thumbnail: '',
-        ));
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -205,10 +197,14 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
                           if (countAddToCartItem.value <= 0) {
                             countAddToCartItem.value = 0;
                             items.value.clear();
+
                             quantities.value = List.generate(qty.value, (_) => 0);
 
                             print(quantities.value.toString());
                           }
+
+                          var qnty =
+                              Provider.of<ProviderController>(context, listen: false).getQuantities;
 
                           return Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -266,8 +262,8 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
                                           children: [
                                             OutlinedButton(
                                               onPressed: () {
-                                                if (quantities.value![index] != 0) {
-                                                  countBuyItem.value = quantities.value![index]--;
+                                                if (qnty[index] != 0) {
+                                                  countBuyItem.value = qnty[index]--;
                                                   //data.value![index].qty = countBuyItem.value;
 
                                                   countAddToCartItem.value =
@@ -291,15 +287,10 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
                                               },
                                               child: Text("-"),
                                             ),
-                                            ValueListenableBuilder(
-                                                valueListenable: quantities,
-                                                builder: (context, _, child) {
-                                                  return Text(
-                                                      quantities.value?[index].toString() ?? "");
-                                                }),
+                                            Text(qnty[index].toString()),
                                             OutlinedButton(
                                               onPressed: () {
-                                                countBuyItem.value = quantities.value![index]++;
+                                                countBuyItem.value = qnty[index]++;
                                                 // productItems.value![index].qty = quantities.value![index]++;
                                                 //data.value![index].qty = countBuyItem.value;
                                                 //countAddItemToCart();

@@ -19,7 +19,7 @@ class ProviderController extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<int> get getItemCountCart => quantities;
+  List<int> get getQuantities => quantities;
 
   setItemCountCart(int count) {
     itemCountCart = count;

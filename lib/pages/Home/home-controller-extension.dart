@@ -38,6 +38,9 @@ extension ExtensionSigninController on HomeScreenState {
         qty.value = decodedData.limit ?? 0;
         debugPrint("LIMIT");
 
+        Provider.of<ProviderController>(context, listen: false)
+            .setQuantities(List.generate(decodedData.limit ?? 0, (_) => 0));
+
         // List<ProductModel> decodedData =
         //     (jsonData['products'] as List).map((value) => ProductModel.fromJson(value)).toList();
 
