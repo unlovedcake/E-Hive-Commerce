@@ -66,7 +66,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
   void sendPushMessage(String token, String title, String body) async {
     try {
-      print("oks");
       await http.post(
         Uri.parse('https://fcm.googleapis.com/fcm/send'),
         headers: <String, String>{

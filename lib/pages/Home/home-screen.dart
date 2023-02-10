@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:adopt_a_pet/pages/Home/check-out-screen.dart';
-import 'package:adopt_a_pet/pages/Home/selected-item-screen.dart';
 import 'package:adopt_a_pet/provider-controller/Provider-Controller.dart';
 import 'package:adopt_a_pet/widgets/cache-network-image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -45,9 +44,15 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   String highLightSearchtTerm = "";
+  String label = "Already Added";
+
+  int x = 0;
+  var list;
 
   late AnimationController _animateController;
   late Animation<double> _animation;
+
+  var qnty;
 
   @override
   void initState() {
@@ -109,9 +114,6 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
                         .then((value) {
                       if (value != null && value != "" && value != ".") {
                         quantities.value = value;
-
-                        print(value.toString());
-                        print("sads");
 
                         setState(() {});
                       }
@@ -203,8 +205,11 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
                             print(quantities.value.toString());
                           }
 
-                          var qnty =
+                          qnty =
                               Provider.of<ProviderController>(context, listen: false).getQuantities;
+
+                          list =
+                              Provider.of<ProviderController>(context, listen: false).getListItems;
 
                           return Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -253,198 +258,56 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
                                   Text(
                                     data.value![index].price.toString() ?? "",
                                   ),
-                                  ValueListenableBuilder(
-                                      valueListenable: countBuyItem,
-                                      builder: (context, _, child) {
-                                        return Row(
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                          children: [
-                                            OutlinedButton(
-                                              onPressed: () {
-                                                if (qnty[index] != 0) {
-                                                  countBuyItem.value = qnty[index]--;
-                                                  //data.value![index].qty = countBuyItem.value;
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    children: [
+                                      OutlinedButton(
+                                        onPressed: () {
+                                          if (qnty[index] != 0) {
+                                            Provider.of<ProviderController>(context, listen: false)
+                                                .addItemAtIndex(index, qnty[index] - 1);
+                                            countAddToCartItem.value -= 1;
 
-                                                  countAddToCartItem.value =
-                                                      countAddToCartItem.value - 1;
+                                            for (int i = 0; i < list.length; i++) {
+                                              if (list[i]['id'] == data.value![index].id) {
+                                                list[i]['quantity'] = list[i]['quantity'] - 1;
+                                                break;
+                                              }
+                                            }
+                                          } else {}
+                                        },
+                                        child: Text("-"),
+                                      ),
+                                      Text(Provider.of<ProviderController>(context, listen: true)
+                                          .getQuantities[index]
+                                          .toString()),
+                                      OutlinedButton(
+                                        onPressed: () {
+                                          Provider.of<ProviderController>(context, listen: false)
+                                              .addItemAtIndex(index, qnty[index] + 1);
 
-                                                  for (int i = 0; i < items.value.length; i++) {
-                                                    if (items.value[i]['id'] ==
-                                                        data.value![index].id) {
-                                                      print("ada");
-                                                      items.value[i]['quantity'] =
-                                                          countBuyItem.value - 1;
-                                                      break;
-                                                    }
-                                                  }
-
-                                                  // items.value[index]['quantity'] =
-                                                  //     countBuyItem.value - 1;
-                                                } else {
-                                                  // countAddItemToCart();
-                                                }
-                                              },
-                                              child: Text("-"),
-                                            ),
-                                            Text(qnty[index].toString()),
-                                            OutlinedButton(
-                                              onPressed: () {
-                                                countBuyItem.value = qnty[index]++;
-                                                // productItems.value![index].qty = quantities.value![index]++;
-                                                //data.value![index].qty = countBuyItem.value;
-                                                //countAddItemToCart();
-
-                                                countAddToCartItem.value =
-                                                    countAddToCartItem.value + 1;
-
-                                                bool keyExists = items.value
-                                                    .any((map) => map.containsKey('quantity'));
-
-                                                if (keyExists) {
-                                                  for (int i = 0; i < items.value.length; i++) {
-                                                    if (items.value[i]['id'] ==
-                                                        data.value![index].id) {
-                                                      print("ada");
-                                                      items.value[i]['quantity'] =
-                                                          countBuyItem.value + 1;
-                                                      break;
-                                                    }
-                                                  }
-                                                }
-                                                // print("okey");
-                                                // print(items.value.toString());
-                                              },
-                                              child: Text("+"),
-                                            )
-                                          ],
-                                        );
-                                      }),
+                                          bool keyExists = list.any(
+                                              (map) => map.containsKey('quantity') ? true : false);
+                                          if (keyExists) {
+                                            for (int i = 0; i < list.length; i++) {
+                                              if (list[i]['id'] == data.value![index].id) {
+                                                list[i]['quantity'] = list[i]['quantity'] + 1;
+                                                break;
+                                              }
+                                            }
+                                          }
+                                        },
+                                        child: Text("+"),
+                                      )
+                                    ],
+                                  ),
                                   ValueListenableBuilder(
                                       valueListenable: countBuyItem,
                                       builder: (BuildContext context, _, Widget? child) {
                                         return addToCartButton(index);
                                       }),
                                 ],
-                              ),
-                            ),
-                          );
-
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 18.0),
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.of(context).push(pageRouteAnimate(
-                                    SelectedItemView(dataDetails: data.value![index])));
-                              },
-                              child: Container(
-                                margin: const EdgeInsets.only(right: 12),
-                                height: size.height,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  gradient: LinearGradient(
-                                    colors: [Colors.white, Colors.grey.shade200],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.only(bottom: 5),
-                                      height: size.height * .10,
-                                      width: size.width,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black12,
-                                            blurRadius: 10.0,
-                                            offset: Offset(0, 10),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Hero(
-                                        tag: data.value![index].id.toString(),
-                                        child: CachedNetworkImage(
-                                          fit: BoxFit.cover,
-                                          imageUrl: data.value![index].thumbnail.toString(),
-                                          progressIndicatorBuilder:
-                                              (context, url, downloadProgress) =>
-                                                  CircularProgressIndicator(
-                                                      value: downloadProgress.progress),
-                                          errorWidget: (context, url, error) =>
-                                              Image.asset(AssetStorageImage.eCommerceLogo),
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 8.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          FittedBox(
-                                            child: SubstringHighlight(
-                                              textStyle: const TextStyle(
-                                                  fontWeight: FontWeight.bold, color: Colors.blue),
-                                              text: data.value![index].title.toString(),
-                                              term: highLightSearchtTerm,
-                                            ),
-                                          ),
-                                          Text(
-                                            data.value![index].price.toString() ?? "",
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    ValueListenableBuilder(
-                                        valueListenable: countBuyItem,
-                                        builder: (context, _, child) {
-                                          return Row(
-                                            crossAxisAlignment: CrossAxisAlignment.center,
-                                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                            children: [
-                                              OutlinedButton(
-                                                onPressed: () {
-                                                  if (quantities.value![index] != 0) {
-                                                    countBuyItem.value = quantities.value![index]--;
-                                                    data.value![index].qty--;
-                                                    countAddItemToCart();
-
-                                                    items.value[index]['quantity'] =
-                                                        countBuyItem.value - 1;
-                                                  } else {
-                                                    countAddItemToCart();
-                                                  }
-                                                },
-                                                child: Text("-"),
-                                              ),
-                                              Text(quantities.value?[index].toString() ?? ""),
-                                              OutlinedButton(
-                                                onPressed: () {
-                                                  countBuyItem.value = quantities.value![index]++;
-                                                  data.value![index].qty++;
-
-                                                  items.value[index]['quantity'] =
-                                                      countBuyItem.value + 1;
-
-                                                  print(index.toString());
-                                                  print("Index");
-                                                },
-                                                child: Text("+"),
-                                              )
-                                            ],
-                                          );
-                                        }),
-                                    ValueListenableBuilder(
-                                        valueListenable: countBuyItem,
-                                        builder: (BuildContext context, _, Widget? child) {
-                                          return addToCartButton(index);
-                                        }),
-                                  ],
-                                ),
                               ),
                             ),
                           );
@@ -545,17 +408,34 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
     if (!isAdded) {
       List<Map<String, dynamic>> itemz = [];
 
-      items.value.add({
+      List<ProductModel> product = [];
+
+      itemz.add({
         'id': data.value![index].id,
         'count': index,
         'title': data.value?[index].title.toString() ?? "",
         'description': data.value?[index].description.toString() ?? "",
         'price': data.value?[index].price,
         'thumbnail': data.value?[index].thumbnail.toString() ?? "",
-        'quantity': quantities.value?[index] ?? 0,
+        'quantity': qnty[index] ?? 0,
       });
+      Provider.of<ProviderController>(context, listen: false).setListItems([
+        {
+          'id': data.value![index].id,
+          'count': index,
+          'title': data.value?[index].title.toString() ?? "",
+          'description': data.value?[index].description.toString() ?? "",
+          'price': data.value?[index].price,
+          'thumbnail': data.value?[index].thumbnail.toString() ?? "",
+          'quantity': qnty[index] ?? 0,
+        }
+      ]);
+      countAddToCartItem.value = countAddToCartItem.value +
+          int.parse(Provider.of<ProviderController>(context, listen: false)
+              .getQuantities[index]
+              .toString());
 
-      Provider.of<ProviderController>(context, listen: false).setListItems(items.value);
+      print(countAddToCartItem.value.toString());
 
       _animateController.forward().then((_) => _animateController.reverse());
     } else {
@@ -564,71 +444,28 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
     }
 
     var list = Provider.of<ProviderController>(context, listen: false).getListItems;
-
-    print(list);
-    print(list.length);
-    print("list");
   }
 
   OutlinedButton addToCartButton(int index) {
     return OutlinedButton.icon(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size.fromHeight(40),
-        backgroundColor: quantities.value![index] == 0 ? Colors.grey.shade100 : AppColors.logoColor,
+        backgroundColor: qnty[index] == 0 ? Colors.grey.shade100 : AppColors.logoColor,
       ),
 
-      onPressed: quantities.value![index] == 0
+      onPressed: qnty[index] == 0
           ? null
           : () {
               qtyCount(index);
-              // bool isAddeds = productItems.value!
-              //     .any((item) => item.id.toString() == data.value![index].id.toString());
-              // if (!isAddeds) {
-              //   productItems.value![index].id = data.value![index].id;
-              //   productItems.value![index].title = data.value![index].title.toString();
-              //   productItems.value![index].description = data.value![index].description.toString();
-              //   productItems.value![index].price = data.value![index].price;
-              //   productItems.value![index].discountPercentage =
-              //       data.value![index].discountPercentage;
-              //   productItems.value![index].stock = int.parse(data.value![index].rating.toString());
-              //   productItems.value![index].brand = data.value![index].brand;
-              //   productItems.value![index].category = data.value![index].category;
-              //   productItems.value![index].thumbnail = data.value![index].thumbnail;
-              //   productItems.value![index].qty = data.value![index].qty;
-              //
-              //   _animateController.forward().then((_) => _animateController.reverse());
-              // }
-
-              // items.value.add({
-              //   'id': _data.value![index].id.toString() ?? "",
-              //   'title': _data.value![index].title.toString() ?? "",
-              //   'description': _data.value![index].description.toString() ?? "",
-              //   'price': _data.value![index].price,
-              //   'thumbnail': _data.value![index].thumbnail.toString() ?? "",
-              //   'quantity': quantities.value?[index] ?? 0,
-              // });
-
-              // productItems.value![index].id = data.value![index].id;
-              // productItems.value![index].title = data.value![index].title;
-              // productItems.value![index].description = data.value![index].description;
-              // productItems.value![index].price = data.value![index].price;
-              // productItems.value![index].id = data.value![index].id;
-              //
-              // print(productItems.value.toString());
-              // print(productItems.value!.length.toString());
-              // print("KK");
-
-              countAddItemToCart();
             },
       icon: Icon(
         Icons.add_shopping_cart,
-        color: quantities.value![index] == 0 ? Colors.grey.shade300 : Colors.black,
+        color: qnty[index] == 0 ? Colors.grey.shade300 : Colors.black,
         size: 24.0,
       ),
       label: Text(
-        'Add To Cart',
-        style:
-            TextStyle(color: quantities.value![index] == 0 ? Colors.grey.shade300 : Colors.white),
+        qnty[index] == 0 ? "Add To Cart" : label,
+        style: TextStyle(color: qnty[index] == 0 ? Colors.grey.shade300 : Colors.white),
       ), // <-- Text
     );
   }

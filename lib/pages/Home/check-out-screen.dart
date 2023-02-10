@@ -1,8 +1,10 @@
 import 'package:adopt_a_pet/pages/Home/payment-method.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../All-Constants/color_constants.dart';
 import '../../All-Constants/global_variable.dart';
+import '../../provider-controller/Provider-Controller.dart';
 import '../../router/Navigate-Route.dart';
 
 class CheckOutScreen extends StatefulWidget {
@@ -33,6 +35,8 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
     if (items.value.isEmpty) {
       countAddToCartItem.value = 0;
     }
+
+    var getItems = Provider.of<ProviderController>(context, listen: false).getListItems;
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
@@ -56,7 +60,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
         ),
         backgroundColor: Colors.white,
       ),
-      body: items.value.isEmpty
+      body: getItems.isEmpty
           ? const Center(child: Text('No Cart Added yet..'))
           // : ListView.separated(
           //     separatorBuilder: (context, index) => const Divider(),
@@ -146,139 +150,130 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
           //       );
           //     },
           //   )
-          : ValueListenableBuilder(
-              valueListenable: items,
-              builder: (context, _, child) {
-                return Column(
-                  children: [
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: items.value.length,
-                        itemBuilder: (context, index) {
-                          print(index);
-                          print("index");
-                          print(items.value.length);
+          : Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: getItems.length,
+                    itemBuilder: (context, index) {
+                      return Card(
+                        child: Column(
+                          children: [
+                            Image.network(
+                              getItems[index]['thumbnail'].toString(),
+                              height: 200,
+                              fit: BoxFit.cover,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    getItems[index]['title'].toString(),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  SizedBox(height: size.height * .04),
+                                  priceAndQuantityValue(
+                                      "Price : ", getItems[index]['price'].toString()),
+                                  priceAndQuantityValue(
+                                      "Qty : ", getItems[index]['quantity'].toString()),
+                                  SizedBox(
+                                    height: size.height * .04,
+                                  ),
+                                  OutlinedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        foregroundColor: Colors.white,
+                                        backgroundColor: Colors.black,
+                                        minimumSize: const Size.fromHeight(50),
+                                      ),
+                                      onPressed: () {
+                                        totalPayment.value -= getItems[index]['price'];
 
-                          return Card(
-                            child: Column(
+                                        if (countAddToCartItem.value > 0) {
+                                          countAddToCartItem.value -=
+                                              int.parse(getItems[index]['quantity'].toString());
+                                        } else if (index <= 0) {
+                                          // quantities.value = List.generate(qty.value, (_) => 0);
+                                          countAddToCartItem.value = 0;
+                                        }
+
+                                        var qnty =
+                                            Provider.of<ProviderController>(context, listen: false)
+                                                .getQuantities;
+
+                                        setState(() {
+                                          qnty[getItems[index]['count']] = 0;
+                                          getItems.removeAt(index);
+                                        });
+                                      },
+                                      child: const Text("Cancel"))
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      // return Card(
+                      //   child: ListTile(
+                      //     title: Text(items[index]['title'].toString()),
+                      //   ),
+                      // );
+                    },
+                  ),
+                ),
+                ValueListenableBuilder(
+                    valueListenable: totalPayment,
+                    builder: (context, _, child) {
+                      return Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          children: [
+                            Row(
                               children: [
-                                Image.network(
-                                  items.value[index]['thumbnail'].toString(),
-                                  height: 200,
-                                  fit: BoxFit.cover,
+                                Text(
+                                  "Total Payment : ",
+                                  style: TextStyle(
+                                      fontSize: 22,
+                                      color: Colors.grey.shade400,
+                                      fontWeight: FontWeight.bold),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        items.value[index]['title'].toString(),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18,
-                                        ),
-                                      ),
-                                      SizedBox(height: size.height * .04),
-                                      priceAndQuantityValue(
-                                          "Price : ", items.value[index]['price'].toString()),
-                                      priceAndQuantityValue(
-                                          "Qty : ", items.value[index]['quantity'].toString()),
-                                      SizedBox(
-                                        height: size.height * .04,
-                                      ),
-                                      OutlinedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            foregroundColor: Colors.white,
-                                            backgroundColor: Colors.black,
-                                            minimumSize: const Size.fromHeight(50),
-                                          ),
-                                          onPressed: () {
-                                            totalPayment.value -= items.value[index]['price'];
-
-                                            if (countAddToCartItem.value > 0) {
-                                              countAddToCartItem.value -= int.parse(
-                                                  items.value[index]['quantity'].toString());
-
-                                              print(quantities.value.toString());
-                                              print("ads");
-                                            } else if (index <= 0) {
-                                              // quantities.value = List.generate(qty.value, (_) => 0);
-                                              countAddToCartItem.value = 0;
-                                            }
-
-                                            setState(() {
-                                              quantities.value?[items.value[index]['count']] = 0;
-                                              items.value.removeAt(index);
-                                              print(quantities.value.toString());
-                                              print("adaz");
-                                            });
-                                          },
-                                          child: const Text("Cancel"))
-                                    ],
+                                FittedBox(
+                                  child: Text(
+                                    totalPayment.value.toString(),
+                                    style:
+                                        const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ],
                             ),
-                          );
-
-                          // return Card(
-                          //   child: ListTile(
-                          //     title: Text(items[index]['title'].toString()),
-                          //   ),
-                          // );
-                        },
-                      ),
-                    ),
-                    ValueListenableBuilder(
-                        valueListenable: totalPayment,
-                        builder: (context, _, child) {
-                          return Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      "Total Payment : ",
-                                      style: TextStyle(
-                                          fontSize: 22,
-                                          color: Colors.grey.shade400,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    FittedBox(
-                                      child: Text(
-                                        totalPayment.value.toString(),
-                                        style: const TextStyle(
-                                            fontSize: 22, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(
-                                  height: 20,
-                                ),
-                                SizedBox(
-                                  width: size.width,
-                                  child: OutlinedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        foregroundColor: Colors.white,
-                                        backgroundColor: AppColors.logoColor,
-                                        minimumSize: const Size.fromHeight(50),
-                                      ),
-                                      onPressed: () {
-                                        Navigator.of(context)
-                                            .push(pageRouteAnimate(const PaymentMethodScreen()));
-                                      },
-                                      child: const Text("Pay")),
-                                )
-                              ],
+                            const SizedBox(
+                              height: 20,
                             ),
-                          );
-                        }),
-                  ],
-                );
-              }),
+                            SizedBox(
+                              width: size.width,
+                              child: OutlinedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    backgroundColor: AppColors.logoColor,
+                                    minimumSize: const Size.fromHeight(50),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(context)
+                                        .push(pageRouteAnimate(const PaymentMethodScreen()));
+                                  },
+                                  child: const Text("Pay")),
+                            )
+                          ],
+                        ),
+                      );
+                    }),
+              ],
+            ),
     );
   }
 

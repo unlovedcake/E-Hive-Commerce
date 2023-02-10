@@ -12,6 +12,13 @@ class ProviderController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void addItemAtIndex(int index, int item) {
+    quantities[index] = item;
+
+    print(quantities[index].toString());
+    notifyListeners();
+  }
+
   List<Map<String, dynamic>> get getListItems => itemz;
 
   setQuantities(List<int> list) {
