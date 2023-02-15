@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../All-Constants/color_constants.dart';
 import '../../All-Constants/global_variable.dart';
+import '../../model/product-model.dart';
 import '../../provider-controller/Provider-Controller.dart';
 import '../../router/Navigate-Route.dart';
 
@@ -17,15 +18,19 @@ class CheckOutScreen extends StatefulWidget {
 class _CheckOutScreenState extends State<CheckOutScreen> {
   var totalPayment = ValueNotifier<double>(0.0);
 
+  var cartItem = ValueNotifier<List<ProductModel>?>([]);
+
+  void _totalPayment() {
+    cartItem.value = dataProduct.value?.where((productCode) => productCode.qty != 0).toList();
+
+    for (int i = 0; i < cartItem.value!.length; i++) {
+      totalPayment.value += cartItem.value![i].price! * cartItem.value![i].qty;
+    }
+  }
+
   @override
   void initState() {
-    for (int i = 0; i < items.value.length; i++) {
-      totalPayment.value += items.value[i]['price'] * items.value[i]['quantity'];
-    }
-
-    print(quantities.value.toString());
-    print("az");
-
+    _totalPayment();
     super.initState();
   }
 
@@ -60,107 +65,19 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
         ),
         backgroundColor: Colors.white,
       ),
-      body: getItems.isEmpty
+      body: cartItem.value!.isEmpty
           ? const Center(child: Text('No Cart Added yet..'))
-          // : ListView.separated(
-          //     separatorBuilder: (context, index) => const Divider(),
-          //     itemCount: items.value.length,
-          //     itemBuilder: (context, index) {
-          //       return Slidable(
-          //         // Specify a key if the Slidable is dismissible.
-          //         key: ValueKey(index),
-          //
-          //         startActionPane: ActionPane(
-          //           motion: const ScrollMotion(),
-          //           // dismissible: DismissiblePane(onDismissed: () {
-          //           //
-          //           // }),
-          //           children: [
-          //             // SlidableAction(
-          //             //   onPressed: (val) {},
-          //             //   backgroundColor: const Color(0xFFFE4A49),
-          //             //   foregroundColor: Colors.white,
-          //             //   icon: Icons.delete,
-          //             //   label: 'Delete',
-          //             // ),
-          //             SlidableAction(
-          //               onPressed: (val) {},
-          //               backgroundColor: Color(0xFF21B7CA),
-          //               foregroundColor: Colors.white,
-          //               icon: Icons.share,
-          //               label: 'Pet Profile',
-          //             ),
-          //           ],
-          //         ),
-          //
-          //         // The end action pane is the one at the right or the bottom side.
-          //         endActionPane: ActionPane(
-          //           motion: const ScrollMotion(),
-          //           children: [
-          //             SlidableAction(
-          //               // An action can be bigger than the others.
-          //               flex: 2,
-          //               onPressed: (val) {
-          //                 print("REMOVE");
-          //
-          //                 setState(() {
-          //                   items.value.removeAt(index);
-          //                   totalPayment.value -= items.value[index]['price'];
-          //
-          //                   countAddToCartItem.value -=
-          //                       int.parse(items.value[index]['quantity'].toString());
-          //                 });
-          //               },
-          //               backgroundColor: const Color(0xFF7BC043),
-          //               foregroundColor: Colors.white,
-          //               icon: Icons.archive,
-          //               label: 'Hide',
-          //             ),
-          //           ],
-          //         ),
-          //
-          //         // The child of the Slidable is what the user sees when the
-          //         // component is not dragged.
-          //         child: Card(
-          //           child: ListTile(
-          //               onTap: () {},
-          //               subtitle: Text(items.value[index]['price'].toString()),
-          //               leading: Container(
-          //                 decoration: const BoxDecoration(
-          //                   color: Colors.white,
-          //                   boxShadow: [
-          //                     BoxShadow(
-          //                       color: Colors.black12,
-          //                       blurRadius: 10.0,
-          //                       offset: Offset(0, 10),
-          //                     ),
-          //                   ],
-          //                 ),
-          //                 child: CachedNetworkImage(
-          //                   height: size.height * .46,
-          //                   imageUrl: items.value[index]['thumbnail'].toString(),
-          //                   progressIndicatorBuilder: (context, url, downloadProgress) =>
-          //                       CircularProgressIndicator(value: downloadProgress.progress),
-          //                   errorWidget: (context, url, error) =>
-          //                       Image.asset(AssetStorageImage.appLogo),
-          //                 ),
-          //               ),
-          //               title: Text(items.value[index]['title'].toString())),
-          //         ),
-          //       );
-          //     },
-          //   )
           : Column(
               children: [
                 Expanded(
                   child: ListView.builder(
-                    itemCount: getItems.length,
+                    itemCount: cartItem.value!.length,
                     itemBuilder: (context, index) {
                       return Card(
                         child: Column(
                           children: [
                             Image.network(
-                              getItems[index]['thumbnail'].toString(),
+                              cartItem.value![index].thumbnail.toString(),
                               height: 200,
                               fit: BoxFit.cover,
                             ),
@@ -170,7 +87,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    getItems[index]['title'].toString(),
+                                    cartItem.value![index].title.toString(),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 18,
@@ -178,9 +95,61 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                   ),
                                   SizedBox(height: size.height * .04),
                                   priceAndQuantityValue(
-                                      "Price : ", getItems[index]['price'].toString()),
-                                  priceAndQuantityValue(
-                                      "Qty : ", getItems[index]['quantity'].toString()),
+                                      "Price : ", cartItem.value![index].price.toString()),
+                                  ValueListenableBuilder(
+                                      valueListenable: countBuyItem,
+                                      builder: (context, val, child) {
+                                        return priceAndQuantityValue(
+                                            "Qty : ", cartItem.value![index].qty.toString());
+                                      }),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    children: [
+                                      OutlinedButton(
+                                        onPressed: () {
+                                          if (cartItem.value![index].qty != 0) {
+                                            cartItem.value![index].qty -= 1;
+                                            countBuyItem.value -= 1;
+
+                                            totalPayment.value -= cartItem.value![index].price!;
+                                            //_totalPayment();
+                                          }
+
+                                          print(cartItem.value![index].id.toString());
+
+                                          if (cartItem.value![index].qty == 0) {
+                                            setState(() {
+                                              cartItem.value!.removeWhere(
+                                                  (item) => item.id == cartItem.value![index].id);
+                                              print("delete");
+                                            });
+                                          }
+                                        },
+                                        child: Text("-"),
+                                      ),
+
+                                      // Text(Provider.of<ProviderController>(context, listen: true)
+                                      //     .getQuantities[index]
+                                      //     .toString()),
+                                      OutlinedButton(
+                                        onPressed: () {
+                                          cartItem.value![index].qty += 1;
+
+                                          countBuyItem.value += 1;
+
+                                          cartItem.value = dataProduct.value
+                                              ?.where((productCode) => productCode.qty != 0)
+                                              .toList();
+
+                                          totalPayment.value += cartItem.value![index].price!;
+
+                                          //_totalPayment();
+                                        },
+                                        child: Text("+"),
+                                      )
+                                    ],
+                                  ),
                                   SizedBox(
                                     height: size.height * .04,
                                   ),
@@ -191,23 +160,12 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                         minimumSize: const Size.fromHeight(50),
                                       ),
                                       onPressed: () {
-                                        totalPayment.value -= getItems[index]['price'];
-
-                                        if (countAddToCartItem.value > 0) {
-                                          countAddToCartItem.value -=
-                                              int.parse(getItems[index]['quantity'].toString());
-                                        } else if (index <= 0) {
-                                          // quantities.value = List.generate(qty.value, (_) => 0);
-                                          countAddToCartItem.value = 0;
-                                        }
-
-                                        var qnty =
-                                            Provider.of<ProviderController>(context, listen: false)
-                                                .getQuantities;
+                                        //totalPayment.value -= getItems[index]['price'];
 
                                         setState(() {
-                                          qnty[getItems[index]['count']] = 0;
-                                          getItems.removeAt(index);
+                                          countBuyItem.value -= cartItem.value![index].qty;
+                                          cartItem.value![index].qty = 0;
+                                          _totalPayment();
                                         });
                                       },
                                       child: const Text("Cancel"))

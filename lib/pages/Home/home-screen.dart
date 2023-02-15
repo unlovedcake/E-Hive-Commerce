@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:adopt_a_pet/pages/Home/check-out-screen.dart';
+import 'package:adopt_a_pet/pages/Server/APi-Response.dart';
 import 'package:adopt_a_pet/provider-controller/Provider-Controller.dart';
 import 'package:adopt_a_pet/widgets/cache-network-image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -11,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:like_button/like_button.dart';
 import 'package:provider/provider.dart';
 import 'package:substring_highlight/substring_highlight.dart';
 import '../../All-Constants/color_constants.dart';
@@ -20,6 +22,8 @@ import '../../model/student-model.dart';
 import '../../router/Navigate-Route.dart';
 import '../../utilities/AssetStorageImage.dart';
 import '../../widgets/Toast-Message.dart';
+import '../Server/NetworkDataSource.dart';
+import '../Server/Repository.dart';
 
 part 'home-controller-extension.dart';
 
@@ -33,11 +37,13 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   //List<ProductModel>? _data = [];
   List<ProductModel>? searchData = [];
+  var dataProducts = ValueNotifier<List<ProductModel>?>([]);
+
+  bool isLike = false;
 
   final ScrollController _controller = ScrollController();
   var isLoading = ValueNotifier<bool>(false);
   var addLimitTenItem = ValueNotifier<int>(10);
-  var countBuyItem = ValueNotifier<int>(0);
 
   TextEditingController searchController = TextEditingController();
 
@@ -54,25 +60,22 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
 
   var qnty;
 
+  void fetchings() {
+    dataProducts.value = dataProduct.value;
+
+    print(dataProducts.value!.length.toString());
+    print("sz");
+  }
+
   @override
   void initState() {
-    Student student = Student(name: 'John Doe', course: 'Computer Science');
-    print(student.name); // Output: John Doe
-    print(student.course); // Output: Computer Science
-    print('student info');
-
-    Student student2 = Student();
-    print(student2.name ?? "ada"); // Output: Unknown
-    print(student2.course ?? "adad"); // Ou
-    print('student info');
-
     _animateController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
     );
     _animation = Tween<double>(begin: 0, end: 1).animate(_animateController);
-
-    _fetchDataProduct();
+    fetch();
+    //_fetchDataProduct();
     scrollLimit();
     super.initState();
   }
@@ -86,6 +89,8 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
+
+    print("scafold");
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -102,7 +107,7 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
         backgroundColor: Colors.white,
         actions: [
           ValueListenableBuilder(
-              valueListenable: countAddToCartItem,
+              valueListenable: countBuyItem,
               builder: (context, _, child) {
                 return TextButton.icon(
                   onPressed: () {
@@ -153,12 +158,13 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
                       padding: const EdgeInsets.only(top: 8),
                       color: Colors.grey.shade100,
                       child: Text(
-                        countAddToCartItem.value.toString(),
+                        countBuyItem.value.toString(),
                         textAlign: TextAlign.center,
                       ),
                     ),
                   ),
                 );
+                //return buildLikeButton();
               }),
         ],
       ),
@@ -166,6 +172,44 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
       body: bodyContent(size),
     );
   }
+
+  // LikeButton buildLikeButton() {
+  //   return LikeButton(
+  //     isLiked: countBuyItem.value[1],
+  //     // onTap: (val) async {
+  //     //   return countBuyItem.value[1];
+  //     // },
+  //     size: 20,
+  //     circleColor: CircleColor(start: Color(0xff00ddff), end: Color(0xff0099cc)),
+  //     bubblesColor: BubblesColor(
+  //       dotPrimaryColor: Color(0xff33b5e5),
+  //       dotSecondaryColor: Color(0xff0099cc),
+  //     ),
+  //     likeBuilder: (bool isLiked) {
+  //       return Icon(
+  //         Icons.home,
+  //         color: countBuyItem.value[1] ? Colors.deepPurpleAccent : Colors.grey,
+  //         size: 20,
+  //       );
+  //     },
+  //     likeCount: countBuyItem.value[0],
+  //     countBuilder: (int? count, bool isLiked, String text) {
+  //       var color = countBuyItem.value[1] ? Colors.deepPurpleAccent : Colors.grey;
+  //       Widget result;
+  //       if (count == 0) {
+  //         result = Text(
+  //           "love",
+  //           style: TextStyle(color: color),
+  //         );
+  //       } else
+  //         result = Text(
+  //           text,
+  //           style: TextStyle(color: color),
+  //         );
+  //       return result;
+  //     },
+  //   );
+  // }
 
   Column bodyContent(Size size) {
     return Column(
@@ -178,141 +222,158 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
           child: RefreshIndicator(
             color: Colors.black,
             onRefresh: () async {
-              await _fetchDataProduct();
+              //await _fetchDataProduct();
+              await fetch();
+              countBuyItem.value = 0;
               addLimitTenItem.value = 10;
               countAddToCartItem.value = 0;
               items.value.clear();
             },
-            child: data.value!.isEmpty && searchController.text.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : data.value!.isEmpty && searchController.text.isNotEmpty
-                    ? const Center(child: Text('No Search Found...'))
-                    : GridView.count(
-                        //crossAxisSpacing: 10,
-                        controller: _controller,
-                        crossAxisCount: 2,
-                        childAspectRatio: 8.0 / 9.8,
-                        children: List.generate(data.value!.length, (index) {
-                          data.value!
-                              .sort((a, b) => a.title.toString().compareTo(b.title.toString()));
+            child: dataProducts.value!.isEmpty && searchController.text.isEmpty
+                ? const Center(child: Center(child: CircularProgressIndicator()))
+                : GridView.count(
+                    //crossAxisSpacing: 10,
+                    controller: _controller,
+                    crossAxisCount: 2,
+                    childAspectRatio: 8.0 / 9.8,
+                    children: List.generate(dataProducts.value!.length, (index) {
+                      dataProducts.value!
+                          .sort((a, b) => a.title.toString().compareTo(b.title.toString()));
 
-                          if (countAddToCartItem.value <= 0) {
-                            countAddToCartItem.value = 0;
-                            items.value.clear();
+                      if (countAddToCartItem.value <= 0) {
+                        countAddToCartItem.value = 0;
+                        items.value.clear();
 
-                            quantities.value = List.generate(qty.value, (_) => 0);
+                        quantities.value = List.generate(qty.value, (_) => 0);
 
-                            print(quantities.value.toString());
-                          }
+                        print(quantities.value.toString());
+                      }
 
-                          qnty =
-                              Provider.of<ProviderController>(context, listen: false).getQuantities;
+                      qnty = Provider.of<ProviderController>(context, listen: false).getQuantities;
 
-                          list =
-                              Provider.of<ProviderController>(context, listen: false).getListItems;
+                      list = Provider.of<ProviderController>(context, listen: false).getListItems;
 
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Card(
-                              child: Column(
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      padding: const EdgeInsets.only(bottom: 5),
-                                      height: size.height * .20,
-                                      width: size.width,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black12,
-                                            blurRadius: 10.0,
-                                            offset: Offset(0, 10),
-                                          ),
-                                        ],
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Card(
+                          child: Column(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  padding: const EdgeInsets.only(bottom: 5),
+                                  height: size.height * .20,
+                                  width: size.width,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 10.0,
+                                        offset: Offset(0, 10),
                                       ),
-                                      child: Hero(
-                                        tag: data.value![index].id.toString(),
-                                        child: CachedNetworkImage(
-                                          fit: BoxFit.cover,
-                                          imageUrl: data.value![index].thumbnail.toString(),
-                                          progressIndicatorBuilder:
-                                              (context, url, downloadProgress) =>
-                                                  CircularProgressIndicator(
-                                                      value: downloadProgress.progress),
-                                          errorWidget: (context, url, error) =>
-                                              Image.asset(AssetStorageImage.eCommerceLogo),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: size.height * .02,
-                                  ),
-                                  SubstringHighlight(
-                                    textStyle: const TextStyle(
-                                        fontWeight: FontWeight.bold, color: Colors.blue),
-                                    text: data.value![index].title.toString(),
-                                    term: highLightSearchtTerm,
-                                  ),
-                                  Text(
-                                    data.value![index].price.toString() ?? "",
-                                  ),
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                    children: [
-                                      OutlinedButton(
-                                        onPressed: () {
-                                          if (qnty[index] != 0) {
-                                            Provider.of<ProviderController>(context, listen: false)
-                                                .addItemAtIndex(index, qnty[index] - 1);
-                                            countAddToCartItem.value -= 1;
-
-                                            for (int i = 0; i < list.length; i++) {
-                                              if (list[i]['id'] == data.value![index].id) {
-                                                list[i]['quantity'] = list[i]['quantity'] - 1;
-                                                break;
-                                              }
-                                            }
-                                          } else {}
-                                        },
-                                        child: Text("-"),
-                                      ),
-                                      Text(Provider.of<ProviderController>(context, listen: true)
-                                          .getQuantities[index]
-                                          .toString()),
-                                      OutlinedButton(
-                                        onPressed: () {
-                                          Provider.of<ProviderController>(context, listen: false)
-                                              .addItemAtIndex(index, qnty[index] + 1);
-
-                                          bool keyExists = list.any(
-                                              (map) => map.containsKey('quantity') ? true : false);
-                                          if (keyExists) {
-                                            for (int i = 0; i < list.length; i++) {
-                                              if (list[i]['id'] == data.value![index].id) {
-                                                list[i]['quantity'] = list[i]['quantity'] + 1;
-                                                break;
-                                              }
-                                            }
-                                          }
-                                        },
-                                        child: Text("+"),
-                                      )
                                     ],
                                   ),
+                                  child: Hero(
+                                    tag: dataProducts.value![index].id.toString(),
+                                    child: CachedNetworkImage(
+                                      fit: BoxFit.cover,
+                                      imageUrl: dataProducts.value![index].thumbnail.toString(),
+                                      progressIndicatorBuilder: (context, url, downloadProgress) =>
+                                          CircularProgressIndicator(
+                                              value: downloadProgress.progress),
+                                      errorWidget: (context, url, error) =>
+                                          Image.asset(AssetStorageImage.eCommerceLogo),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                height: size.height * .02,
+                              ),
+                              SubstringHighlight(
+                                textStyle: const TextStyle(
+                                    fontWeight: FontWeight.bold, color: Colors.blue),
+                                text: dataProducts.value![index].title.toString(),
+                                term: highLightSearchtTerm,
+                              ),
+                              Text(
+                                dataProducts.value![index].price.toString() ?? "",
+                              ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  OutlinedButton(
+                                    onPressed: () {
+                                      if (dataProducts.value![index].qty != 0) {
+                                        dataProducts.value![index].qty -= 1;
+                                        countBuyItem.value -= 1;
+                                      }
+                                      // if (qnty[index] != 0) {
+                                      //   Provider.of<ProviderController>(context, listen: false)
+                                      //       .addItemAtIndex(index, qnty[index] - 1);
+                                      //   countAddToCartItem.value -= 1;
+                                      //
+                                      //   for (int i = 0; i < list.length; i++) {
+                                      //     if (list[i]['id'] == data.value![index].id) {
+                                      //       list[i]['quantity'] = list[i]['quantity'] - 1;
+                                      //       break;
+                                      //     }
+                                      //   }
+                                      // } else {}
+                                    },
+                                    child: Text("-"),
+                                  ),
+
                                   ValueListenableBuilder(
                                       valueListenable: countBuyItem,
-                                      builder: (BuildContext context, _, Widget? child) {
-                                        return addToCartButton(index);
+                                      builder: (context, val, child) {
+                                        return Text(dataProducts.value![index].qty.toString());
                                       }),
+
+                                  // Text(Provider.of<ProviderController>(context, listen: true)
+                                  //     .getQuantities[index]
+                                  //     .toString()),
+                                  OutlinedButton(
+                                    onPressed: () {
+                                      dataProducts.value![index].qty += 1;
+
+                                      countBuyItem.value += 1;
+
+                                      isLike = true;
+
+                                      print(dataProducts.value![index].qty.toString());
+                                      //setState(() {});
+
+                                      // Provider.of<ProviderController>(context, listen: false)
+                                      //     .addItemAtIndex(index, qnty[index] + 1);
+                                      //
+                                      // bool keyExists = list.any(
+                                      //     (map) => map.containsKey('quantity') ? true : false);
+                                      // if (keyExists) {
+                                      //   for (int i = 0; i < list.length; i++) {
+                                      //     if (list[i]['id'] == data.value![index].id) {
+                                      //       list[i]['quantity'] = list[i]['quantity'] + 1;
+                                      //       break;
+                                      //     }
+                                      //   }
+                                      // }
+                                    },
+                                    child: Text("+"),
+                                  )
                                 ],
                               ),
-                            ),
-                          );
-                        }),
-                      ),
+                              // ValueListenableBuilder(
+                              //     valueListenable: countBuyItem,
+                              //     builder: (BuildContext context, _, Widget? child) {
+                              //       return addToCartButton(index);
+                              //     }),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
           ),
         ),
         ValueListenableBuilder(
@@ -403,7 +464,8 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
   }
 
   void qtyCount(int index) {
-    bool isAdded = items.value.any((item) => item['id'] == data.value![index].id.toString());
+    bool isAdded =
+        items.value.any((item) => item['id'] == dataProducts.value![index].id.toString());
 
     if (!isAdded) {
       List<Map<String, dynamic>> itemz = [];
@@ -411,22 +473,22 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
       List<ProductModel> product = [];
 
       itemz.add({
-        'id': data.value![index].id,
+        'id': dataProducts.value![index].id,
         'count': index,
-        'title': data.value?[index].title.toString() ?? "",
-        'description': data.value?[index].description.toString() ?? "",
-        'price': data.value?[index].price,
-        'thumbnail': data.value?[index].thumbnail.toString() ?? "",
+        'title': dataProducts.value?[index].title.toString() ?? "",
+        'description': dataProducts.value?[index].description.toString() ?? "",
+        'price': dataProducts.value?[index].price,
+        'thumbnail': dataProducts.value?[index].thumbnail.toString() ?? "",
         'quantity': qnty[index] ?? 0,
       });
       Provider.of<ProviderController>(context, listen: false).setListItems([
         {
-          'id': data.value![index].id,
+          'id': dataProducts.value![index].id,
           'count': index,
-          'title': data.value?[index].title.toString() ?? "",
-          'description': data.value?[index].description.toString() ?? "",
-          'price': data.value?[index].price,
-          'thumbnail': data.value?[index].thumbnail.toString() ?? "",
+          'title': dataProducts.value?[index].title.toString() ?? "",
+          'description': dataProducts.value?[index].description.toString() ?? "",
+          'price': dataProducts.value?[index].price,
+          'thumbnail': dataProducts.value?[index].thumbnail.toString() ?? "",
           'quantity': qnty[index] ?? 0,
         }
       ]);

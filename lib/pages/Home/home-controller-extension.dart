@@ -14,8 +14,9 @@ extension ExtensionSigninController on HomeScreenState {
       if (_controller.position.pixels == _controller.position.maxScrollExtent && !isLoading.value) {
         setState(() {});
 
-        if (addLimitTenItem.value < data.value!.length) {
-          _fetchDataProduct();
+        if (addLimitTenItem.value < dataProduct.value!.length) {
+          //_fetchDataProduct();
+          fetch();
           addLimitTenItem.value += 10;
           isLoading.value = true;
         }
@@ -25,53 +26,68 @@ extension ExtensionSigninController on HomeScreenState {
     });
   }
 
-  Future<void> _fetchDataProduct() async {
-    final response = await http.get(Uri.parse('https://dummyjson.com/products'));
-    if (response.statusCode == 200) {
-      setState(() {
-        final jsonData = json.decode((response.body));
+  fetch() async {
+    final repository = Repository(dataSource: NetworkDataSource());
+    final datas = await repository.fetchData();
 
-        ProductListModel? decodedData = ProductListModel.fromMap(jsonData);
+    setState(() {});
+    qty.value = 30;
+    dataProduct.value = datas.productList;
 
-        debugPrint(decodedData.limit.toString());
-
-        qty.value = decodedData.limit ?? 0;
-        debugPrint("LIMIT");
-
-        Provider.of<ProviderController>(context, listen: false)
-            .setQuantities(List.generate(decodedData.limit ?? 0, (_) => 0));
-
-        // List<ProductModel> decodedData =
-        //     (jsonData['products'] as List).map((value) => ProductModel.fromJson(value)).toList();
-
-        data.value = decodedData.productData;
-
-        productItems.value = data.value;
-        // _data = decodedData.productData
-        //     ?.sublist(0, dataLenght.value)
-        //     .map(
-        //       (value) => ProductModel(
-        //           id: value.id,
-        //           title: value.title,
-        //           description: value.description,
-        //           price: value.price,
-        //           discountPercentage: value.discountPercentage,
-        //           rating: value.rating,
-        //           stock: value.stock,
-        //           brand: value.brand,
-        //           category: value.category,
-        //           thumbnail: value.thumbnail),
-        //     )
-        //     .toList();
-
-        searchData = data.value!;
-
-        isLoading.value = false;
-      });
-    } else {
-      throw Exception('Failed to load data');
-    }
+    fetchings();
   }
+
+  // Future<ApiResponse> _fetchDataProduct() async {
+  //   ApiResponse apiResponse = ApiResponse();
+  //   final response = await http.get(Uri.parse('https://dummyjson.com/products'));
+  //   if (response.statusCode == 200) {
+  //     setState(() {
+  //       final jsonData = json.decode((response.body));
+  //
+  //       ProductListModel? decodedData = ProductListModel.fromMap(jsonData);
+  //
+  //       debugPrint(decodedData.limit.toString());
+  //
+  //       qty.value = decodedData.limit ?? 0;
+  //       debugPrint("LIMIT");
+  //
+  //       Provider.of<ProviderController>(context, listen: false)
+  //           .setQuantities(List.generate(decodedData.limit ?? 0, (_) => 0));
+  //
+  //       // List<ProductModel> decodedData =
+  //       //     (jsonData['products'] as List).map((value) => ProductModel.fromJson(value)).toList();
+  //
+  //       dataProduct.value = decodedData.productData;
+  //
+  //       productItems.value = dataProduct.value;
+  //       // _data = decodedData.productData
+  //       //     ?.sublist(0, dataLenght.value)
+  //       //     .map(
+  //       //       (value) => ProductModel(
+  //       //           id: value.id,
+  //       //           title: value.title,
+  //       //           description: value.description,
+  //       //           price: value.price,
+  //       //           discountPercentage: value.discountPercentage,
+  //       //           rating: value.rating,
+  //       //           stock: value.stock,
+  //       //           brand: value.brand,
+  //       //           category: value.category,
+  //       //           thumbnail: value.thumbnail),
+  //       //     )
+  //       //     .toList();
+  //
+  //       searchData = dataProduct.value!;
+  //
+  //       isLoading.value = false;
+  //     });
+  //   } else {
+  //     apiResponse.error = jsonDecode(response.body)['message'];
+  //     throw Exception('Failed to load data');
+  //   }
+  //
+  //   return apiResponse;
+  // }
 
   void sendPushMessage(String token, String title, String body) async {
     try {
@@ -103,11 +119,15 @@ extension ExtensionSigninController on HomeScreenState {
 
   void _searchFilter(String enteredKeyword) {
     if (enteredKeyword.isEmpty) {
-      _fetchDataProduct();
+      // _fetchDataProduct();
+      fetchings();
     } else {
-      data.value = searchData!
+      searchData = dataProducts.value!
           .where((product) => product.title!.toUpperCase().contains(enteredKeyword.toUpperCase()))
           .toList();
+      if (searchData!.isNotEmpty) {
+        dataProducts.value = searchData;
+      }
     }
   }
 }
