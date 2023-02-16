@@ -142,6 +142,8 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                               ?.where((productCode) => productCode.qty != 0)
                                               .toList();
 
+                                          setState(() {});
+
                                           totalPayment.value += cartItem.value![index].price!;
 
                                           //_totalPayment();

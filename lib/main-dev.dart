@@ -5,7 +5,7 @@ import 'app-config.dart';
 import 'app.dart';
 
 void main() async {
-  AppConfig devAppConfig = AppConfig(appName: 'E-Hive Staging', flavor: 'staging');
+  AppConfig devAppConfig = AppConfig(appName: 'E-Hive Dev', flavor: 'dev');
   Widget app = await initializeApp(devAppConfig);
   runApp(
     MultiProvider(providers: [

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:adopt_a_pet/pages/Home/check-out-screen.dart';
+import 'package:adopt_a_pet/pages/Home/sample.dart';
 import 'package:adopt_a_pet/pages/Server/APi-Response.dart';
 import 'package:adopt_a_pet/provider-controller/Provider-Controller.dart';
 import 'package:adopt_a_pet/widgets/cache-network-image.dart';
@@ -235,7 +236,7 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
                     //crossAxisSpacing: 10,
                     controller: _controller,
                     crossAxisCount: 2,
-                    childAspectRatio: 8.0 / 9.8,
+                    childAspectRatio: 8.0 / 12.8,
                     children: List.generate(dataProducts.value!.length, (index) {
                       dataProducts.value!
                           .sort((a, b) => a.title.toString().compareTo(b.title.toString()));
@@ -255,122 +256,191 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
 
                       return Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Card(
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.only(bottom: 5),
-                                  height: size.height * .20,
-                                  width: size.width,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black12,
-                                        blurRadius: 10.0,
-                                        offset: Offset(0, 10),
-                                      ),
-                                    ],
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.only(bottom: 5),
+                              height: size.height * .20,
+                              width: size.width,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 10.0,
+                                    offset: Offset(0, 10),
                                   ),
-                                  child: Hero(
-                                    tag: dataProducts.value![index].id.toString(),
-                                    child: CachedNetworkImage(
-                                      fit: BoxFit.cover,
-                                      imageUrl: dataProducts.value![index].thumbnail.toString(),
-                                      progressIndicatorBuilder: (context, url, downloadProgress) =>
-                                          CircularProgressIndicator(
-                                              value: downloadProgress.progress),
-                                      errorWidget: (context, url, error) =>
-                                          Image.asset(AssetStorageImage.eCommerceLogo),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(
-                                height: size.height * .02,
-                              ),
-                              SubstringHighlight(
-                                textStyle: const TextStyle(
-                                    fontWeight: FontWeight.bold, color: Colors.blue),
-                                text: dataProducts.value![index].title.toString(),
-                                term: highLightSearchtTerm,
-                              ),
-                              Text(
-                                dataProducts.value![index].price.toString() ?? "",
-                              ),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                children: [
-                                  OutlinedButton(
-                                    onPressed: () {
-                                      if (dataProducts.value![index].qty != 0) {
-                                        dataProducts.value![index].qty -= 1;
-                                        countBuyItem.value -= 1;
-                                      }
-                                      // if (qnty[index] != 0) {
-                                      //   Provider.of<ProviderController>(context, listen: false)
-                                      //       .addItemAtIndex(index, qnty[index] - 1);
-                                      //   countAddToCartItem.value -= 1;
-                                      //
-                                      //   for (int i = 0; i < list.length; i++) {
-                                      //     if (list[i]['id'] == data.value![index].id) {
-                                      //       list[i]['quantity'] = list[i]['quantity'] - 1;
-                                      //       break;
-                                      //     }
-                                      //   }
-                                      // } else {}
-                                    },
-                                    child: Text("-"),
-                                  ),
-
-                                  ValueListenableBuilder(
-                                      valueListenable: countBuyItem,
-                                      builder: (context, val, child) {
-                                        return Text(dataProducts.value![index].qty.toString());
-                                      }),
-
-                                  // Text(Provider.of<ProviderController>(context, listen: true)
-                                  //     .getQuantities[index]
-                                  //     .toString()),
-                                  OutlinedButton(
-                                    onPressed: () {
-                                      dataProducts.value![index].qty += 1;
-
-                                      countBuyItem.value += 1;
-
-                                      isLike = true;
-
-                                      print(dataProducts.value![index].qty.toString());
-                                      //setState(() {});
-
-                                      // Provider.of<ProviderController>(context, listen: false)
-                                      //     .addItemAtIndex(index, qnty[index] + 1);
-                                      //
-                                      // bool keyExists = list.any(
-                                      //     (map) => map.containsKey('quantity') ? true : false);
-                                      // if (keyExists) {
-                                      //   for (int i = 0; i < list.length; i++) {
-                                      //     if (list[i]['id'] == data.value![index].id) {
-                                      //       list[i]['quantity'] = list[i]['quantity'] + 1;
-                                      //       break;
-                                      //     }
-                                      //   }
-                                      // }
-                                    },
-                                    child: Text("+"),
-                                  )
                                 ],
                               ),
-                              // ValueListenableBuilder(
-                              //     valueListenable: countBuyItem,
-                              //     builder: (BuildContext context, _, Widget? child) {
-                              //       return addToCartButton(index);
-                              //     }),
-                            ],
-                          ),
+                              child: Hero(
+                                tag: dataProducts.value![index].id.toString(),
+                                child: CachedNetworkImage(
+                                  fit: BoxFit.cover,
+                                  imageUrl: dataProducts.value![index].thumbnail.toString(),
+                                  progressIndicatorBuilder: (context, url, downloadProgress) =>
+                                      CircularProgressIndicator(value: downloadProgress.progress),
+                                  errorWidget: (context, url, error) =>
+                                      Image.asset(AssetStorageImage.eCommerceLogo),
+                                ),
+                              ),
+                            ),
+                            Text(
+                              dataProducts.value![index].title.toString(),
+                            ),
+                            Text(
+                              dataProducts.value![index].price.toString(),
+                            ),
+                            SizedBox(
+                              height: size.height * .02,
+                            ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                OutlinedButton(
+                                  onPressed: () {
+                                    if (dataProducts.value![index].qty != 0) {
+                                      dataProducts.value![index].qty -= 1;
+                                      countBuyItem.value -= 1;
+                                    }
+                                  },
+                                  child: Text("-"),
+                                ),
+                                ValueListenableBuilder(
+                                    valueListenable: countBuyItem,
+                                    builder: (context, val, child) {
+                                      return Text(dataProducts.value![index].qty.toString());
+                                    }),
+                                OutlinedButton(
+                                  onPressed: () {
+                                    dataProducts.value![index].qty += 1;
+
+                                    countBuyItem.value += 1;
+                                  },
+                                  child: Text("+"),
+                                )
+                              ],
+                            ),
+                          ],
                         ),
+
+                        // Card(
+                        //   child: Column(
+                        //     children: [
+                        //       Expanded(
+                        //         child: Container(
+                        //           padding: const EdgeInsets.only(bottom: 5),
+                        //           height: size.height * .20,
+                        //           width: size.width,
+                        //           decoration: const BoxDecoration(
+                        //             color: Colors.white,
+                        //             boxShadow: [
+                        //               BoxShadow(
+                        //                 color: Colors.black12,
+                        //                 blurRadius: 10.0,
+                        //                 offset: Offset(0, 10),
+                        //               ),
+                        //             ],
+                        //           ),
+                        //           child: Hero(
+                        //             tag: dataProducts.value![index].id.toString(),
+                        //             child: CachedNetworkImage(
+                        //               fit: BoxFit.cover,
+                        //               imageUrl: dataProducts.value![index].thumbnail.toString(),
+                        //               progressIndicatorBuilder: (context, url, downloadProgress) =>
+                        //                   CircularProgressIndicator(
+                        //                       value: downloadProgress.progress),
+                        //               errorWidget: (context, url, error) =>
+                        //                   Image.asset(AssetStorageImage.eCommerceLogo),
+                        //             ),
+                        //           ),
+                        //         ),
+                        //       ),
+                        //       SizedBox(
+                        //         height: size.height * .02,
+                        //       ),
+                        //       SubstringHighlight(
+                        //         textStyle: const TextStyle(
+                        //             fontWeight: FontWeight.bold, color: Colors.blue),
+                        //         text: dataProducts.value![index].title.toString(),
+                        //         term: highLightSearchtTerm,
+                        //       ),
+                        //       Text(
+                        //         dataProducts.value![index].price.toString() ?? "",
+                        //       ),
+                        //       Row(
+                        //         crossAxisAlignment: CrossAxisAlignment.center,
+                        //         mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        //         children: [
+                        //           OutlinedButton(
+                        //             onPressed: () {
+                        //               if (dataProducts.value![index].qty != 0) {
+                        //                 dataProducts.value![index].qty -= 1;
+                        //                 countBuyItem.value -= 1;
+                        //               }
+                        //               // if (qnty[index] != 0) {
+                        //               //   Provider.of<ProviderController>(context, listen: false)
+                        //               //       .addItemAtIndex(index, qnty[index] - 1);
+                        //               //   countAddToCartItem.value -= 1;
+                        //               //
+                        //               //   for (int i = 0; i < list.length; i++) {
+                        //               //     if (list[i]['id'] == data.value![index].id) {
+                        //               //       list[i]['quantity'] = list[i]['quantity'] - 1;
+                        //               //       break;
+                        //               //     }
+                        //               //   }
+                        //               // } else {}
+                        //             },
+                        //             child: Text("-"),
+                        //           ),
+                        //
+                        //           ValueListenableBuilder(
+                        //               valueListenable: countBuyItem,
+                        //               builder: (context, val, child) {
+                        //                 return Text(dataProducts.value![index].qty.toString());
+                        //               }),
+                        //
+                        //           // Text(Provider.of<ProviderController>(context, listen: true)
+                        //           //     .getQuantities[index]
+                        //           //     .toString()),
+                        //           OutlinedButton(
+                        //             onPressed: () {
+                        //               dataProducts.value![index].qty += 1;
+                        //
+                        //               countBuyItem.value += 1;
+                        //
+                        //               isLike = true;
+                        //
+                        //               print(dataProducts.value![index].qty.toString());
+                        //               //setState(() {});
+                        //
+                        //               // Provider.of<ProviderController>(context, listen: false)
+                        //               //     .addItemAtIndex(index, qnty[index] + 1);
+                        //               //
+                        //               // bool keyExists = list.any(
+                        //               //     (map) => map.containsKey('quantity') ? true : false);
+                        //               // if (keyExists) {
+                        //               //   for (int i = 0; i < list.length; i++) {
+                        //               //     if (list[i]['id'] == data.value![index].id) {
+                        //               //       list[i]['quantity'] = list[i]['quantity'] + 1;
+                        //               //       break;
+                        //               //     }
+                        //               //   }
+                        //               // }
+                        //             },
+                        //             child: Text("+"),
+                        //           )
+                        //         ],
+                        //       ),
+                        //       // ValueListenableBuilder(
+                        //       //     valueListenable: countBuyItem,
+                        //       //     builder: (BuildContext context, _, Widget? child) {
+                        //       //       return addToCartButton(index);
+                        //       //     }),
+                        //     ],
+                        //   ),
+                        // ),
                       );
                     }),
                   ),
@@ -427,7 +497,9 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
             title: const Text('Products'),
             onTap: () {
               Navigator.of(context).push(MaterialPageRoute(
-                builder: (BuildContext context) => const HomeScreen(),
+                builder: (BuildContext context) => Sample(
+                  title: "List",
+                ),
               ));
             },
           ),
